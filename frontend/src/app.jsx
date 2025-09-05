@@ -1,118 +1,11 @@
+
 import React, { useState, useEffect, useMemo, useCallback, useReducer, createContext, useContext, memo, lazy, Suspense } from 'react';
-import { ChevronRight, ChevronLeft, Car, Bike, Calendar, User, Check, Building, Shapes, ClipboardCheck, XCircle, MapPin, Clock, Star, Shield, Zap, LogIn, LogOut, CreditCard, Map, Bell, Globe, Moon, Sun, Search, Heart, MessageCircle } from 'lucide-react';
-import { CircularProgress, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Switch, FormControlLabel } from '@mui/material';
+import { ChevronRight, ChevronLeft, Car, Bike, Calendar, User, Check, Building, Shapes, ClipboardCheck, XCircle, MapPin, Clock, Star, Shield, Zap } from 'lucide-react';
+import { CircularProgress } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { IntlProvider, FormattedMessage } from 'react-intl';
-// Inline message objects instead of importing files
-const enMessages = {
-  "app.title": "Book Your Perfect Ride",
-  "app.subtitle": "Fast, Simple, and Secure Vehicle Rentals", 
-  "app.secure": "100% Secure",
-  "app.instant": "Instant Booking",
-  "app.rating": "4.9/5 Rating"
-};
-
-const frMessages = {
-  "app.title": "Réservez Votre Trajet Parfait",
-  "app.subtitle": "Location de Véhicules Rapide, Simple et Sécurisée",
-  "app.secure": "100% Sécurisé", 
-  "app.instant": "Réservation Instantanée",
-  "app.rating": "Note 4.9/5"
-};
-
-// --- NEW: STRIPE PROMISE FOR PAYMENT INTEGRATION ---
-const stripePromise = loadStripe('pk_test_your_stripe_public_key'); // Replace with actual key
-
-// --- NEW: AUTHENTICATION CONTEXT ---
-const AuthContext = createContext();
-const useAuthContext = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
-};
-
-// --- NEW: THEME CONTEXT FOR DARK MODE ---
-const ThemeContext = createContext();
-const useThemeContext = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useThemeContext must be used within a ThemeProvider');
-  }
-  return context;
-};
-
-// --- NEW: NOTIFICATION CONTEXT ---
-const NotificationContext = createContext();
-const useNotificationContext = () => {
-  const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useNotificationContext must be used within a NotificationProvider');
-  }
-  return context;
-};
-
-// --- NEW: CUSTOM HOOK FOR GEOLOCATION ---
-const useGeolocation = () => {
-  const [location, setLocation] = useState(null);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        (err) => {
-          setError(err.message);
-        }
-      );
-    } else {
-      setError('Geolocation is not supported by this browser.');
-    }
-  }, []);
-
-  return { location, error };
-};
-
-// --- NEW: CUSTOM HOOK FOR REAL-TIME UPDATES (SIMULATED WITH INTERVAL) ---
-const useRealTimeAvailability = (vehicles) => {
-  const [availableVehicles, setAvailableVehicles] = useState(vehicles);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Simulate real-time changes
-      setAvailableVehicles(prev => prev.map(v => ({
-        ...v,
-        is_available: Math.random() > 0.2 // 80% chance available
-      })));
-    }, 5000); // Every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [vehicles]);
-
-  return availableVehicles;
-};
-
-// --- NEW: CUSTOM HOOK FOR ANALYTICS TRACKING ---
-const useAnalytics = () => {
-  const trackEvent = useCallback((eventName, data) => {
-    console.log(`Tracking event: ${eventName}`, data);
-    // Integrate with Google Analytics or similar
-  }, []);
-
-  return { trackEvent };
-};
 
 // --- REACT CONTEXT API FOR GLOBAL STATE MANAGEMENT ---
 const BookingContext = createContext();
@@ -191,11 +84,6 @@ const useApiCall = (url, dependencies = []) => {
   return { data, loading, error, refetch: fetchData };
 };
 
-// --- NEW: CUSTOM HOOK FOR FETCHING USER PROFILE ---
-const useUserProfile = (userId) => {
-  return useApiCall(userId ? `${API_BASE_URL}/users/${userId}` : null, [userId]);
-};
-
 // --- REDUCER FOR COMPLEX STATE MANAGEMENT ---
 const formReducer = (state, action) => {
   switch (action.type) {
@@ -209,40 +97,6 @@ const formReducer = (state, action) => {
       return { ...state, errors: action.payload };
     case 'CLEAR_ERRORS':
       return { ...state, errors: {} };
-    default:
-      return state;
-  }
-};
-
-// --- NEW: AUTH REDUCER ---
-const authReducer = (state, action) => {
-  switch (action.type) {
-    case 'LOGIN':
-      return { ...state, user: action.payload, isAuthenticated: true };
-    case 'LOGOUT':
-      return { ...state, user: null, isAuthenticated: false };
-    default:
-      return state;
-  }
-};
-
-// --- NEW: THEME REDUCER ---
-const themeReducer = (state, action) => {
-  switch (action.type) {
-    case 'TOGGLE_THEME':
-      return { ...state, isDark: !state.isDark };
-    default:
-      return state;
-  }
-};
-
-// --- NEW: NOTIFICATION REDUCER ---
-const notificationReducer = (state, action) => {
-  switch (action.type) {
-    case 'ADD_NOTIFICATION':
-      return { ...state, notifications: [...state.notifications, action.payload] };
-    case 'REMOVE_NOTIFICATION':
-      return { ...state, notifications: state.notifications.filter(n => n.id !== action.payload) };
     default:
       return state;
   }
@@ -275,17 +129,8 @@ const VEHICLES_DATA = [
   { id: 12, name: 'Jawa Perak', type_id: 4, price_per_day: 900.00, is_available: true }
 ];
 
-// --- NEW: HARDCODED REVIEWS DATA ---
-const REVIEWS_DATA = [
-  { id: 1, vehicleId: 1, user: 'John Doe', rating: 4.5, comment: 'Great car!' },
-  // Add more reviews...
-];
-
 // --- CONFIGURATION & API ---
 const API_BASE_URL = 'http://localhost:5000/api';
-
-// --- NEW: GOOGLE MAPS API KEY ---
-const GOOGLE_MAPS_API_KEY = 'your_google_maps_api_key'; // Replace with actual key
 
 // --- VEHICLE IMAGE URLs ---
 const VEHICLE_IMAGES = {
@@ -397,18 +242,6 @@ const VehicleCard = memo(({ model, isSelected, onClick }) => (
     </div>
 ));
 
-// --- NEW: REVIEW CARD COMPONENT ---
-const ReviewCard = memo(({ review }) => (
-    <div className="p-4 border rounded-lg shadow-md">
-        <div className="flex items-center gap-2">
-            <Star className="text-amber-500" />
-            <span>{review.rating}</span>
-        </div>
-        <p>{review.comment}</p>
-        <p className="text-sm text-gray-500">- {review.user}</p>
-    </div>
-));
-
 // --- ENHANCED LOADING COMPONENT ---
 const LoadingSpinner = memo(({ size = 'default', text = 'Loading...' }) => {
     const sizeClasses = {
@@ -439,125 +272,6 @@ const SuccessAnimation = lazy(() => Promise.resolve({
                 <h3 className="text-3xl font-bold text-gray-900">Booking Confirmed!</h3>
                 <p className="text-gray-600 text-lg">Your adventure awaits!</p>
             </div>
-        </div>
-    ))
-}));
-
-// --- NEW: LAZY LOADED PAYMENT FORM ---
-const PaymentForm = lazy(() => Promise.resolve({
-    default: memo(() => {
-        const stripe = useStripe();
-        const elements = useElements();
-        const [paymentError, setPaymentError] = useState(null);
-        const [processing, setProcessing] = useState(false);
-
-        const handlePayment = async () => {
-            setProcessing(true);
-            try {
-                // Simulate payment
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                // Actual Stripe payment would go here
-            } catch (err) {
-                setPaymentError(err.message);
-            } finally {
-                setProcessing(false);
-            }
-        };
-
-        return (
-            <div className="space-y-4">
-                <CardElement />
-                {paymentError && <p className="text-red-500">{paymentError}</p>}
-                <Button onClick={handlePayment} disabled={processing}>
-                    {processing ? 'Processing...' : 'Pay Now'}
-                </Button>
-            </div>
-        );
-    })
-}));
-
-// --- NEW: LAZY LOADED MAP COMPONENT ---
-const MapComponent = lazy(() => Promise.resolve({
-    default: memo(({ center }) => (
-        <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-            <GoogleMap mapContainerStyle={{ height: '400px', width: '100%' }} center={center} zoom={15}>
-                <Marker position={center} />
-            </GoogleMap>
-        </LoadScript>
-    ))
-}));
-
-// --- NEW: LAZY LOADED PROFILE COMPONENT ---
-const Profile = lazy(() => Promise.resolve({
-    default: memo(({ user }) => (
-        <div className="space-y-4">
-            <h2>Profile</h2>
-            <p>Name: {user.name}</p>
-            {/* Add more profile fields */}
-        </div>
-    ))
-}));
-
-// --- NEW: LAZY LOADED BOOKING HISTORY COMPONENT ---
-const BookingHistory = lazy(() => Promise.resolve({
-    default: memo(({ bookings }) => (
-        <div className="space-y-4">
-            <h2>Booking History</h2>
-            {bookings.map(booking => (
-                <div key={booking.id} className="border p-4 rounded-lg">
-                    <p>Vehicle: {booking.vehicleId}</p>
-                    <p>Dates: {booking.startDate} to {booking.endDate}</p>
-                </div>
-            ))}
-        </div>
-    ))
-}));
-
-// --- NEW: LAZY LOADED REVIEWS COMPONENT ---
-const Reviews = lazy(() => Promise.resolve({
-    default: memo(({ vehicleId }) => {
-        const reviews = REVIEWS_DATA.filter(r => r.vehicleId === vehicleId);
-        return (
-            <div className="space-y-4">
-                <h2>Reviews</h2>
-                {reviews.map(review => <ReviewCard key={review.id} review={review} />)}
-            </div>
-        );
-    })
-}));
-
-// --- NEW: LAZY LOADED SEARCH COMPONENT ---
-const SearchBar = lazy(() => Promise.resolve({
-    default: memo(({ onSearch }) => (
-        <div className="flex items-center gap-2">
-            <Search className="w-5 h-5" />
-            <input type="text" placeholder="Search vehicles..." onChange={onSearch} className="border p-2 rounded" />
-        </div>
-    ))
-}));
-
-// --- NEW: LAZY LOADED FAVORITES COMPONENT ---
-const Favorites = lazy(() => Promise.resolve({
-    default: memo(({ favorites }) => (
-        <div className="space-y-4">
-            <h2>Favorites</h2>
-            {favorites.map(fav => (
-                <div key={fav.id} className="flex items-center gap-2">
-                    <Heart className="text-red-500" />
-                    <p>{fav.name}</p>
-                </div>
-            ))}
-        </div>
-    ))
-}));
-
-// --- NEW: LAZY LOADED CHAT SUPPORT COMPONENT ---
-const ChatSupport = lazy(() => Promise.resolve({
-    default: memo(() => (
-        <div className="fixed bottom-4 right-4 bg-white border rounded-lg p-4 shadow-lg">
-            <MessageCircle className="w-6 h-6" />
-            <p>Chat with support</p>
-            {/* Integrate actual chat */}
         </div>
     ))
 }));
@@ -619,113 +333,12 @@ const BookingProvider = ({ children }) => {
     );
 };
 
-// --- NEW: AUTH PROVIDER ---
-const AuthProvider = ({ children }) => {
-  const initialAuthState = { user: null, isAuthenticated: false };
-  const [authState, authDispatch] = useReducer(authReducer, initialAuthState);
-
-  const login = useCallback((user) => {
-    authDispatch({ type: 'LOGIN', payload: user });
-  }, []);
-
-  const logout = useCallback(() => {
-    authDispatch({ type: 'LOGOUT' });
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ ...authState, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// --- NEW: THEME PROVIDER ---
-const ThemeProvider = ({ children }) => {
-  const initialThemeState = { isDark: false };
-  const [themeState, themeDispatch] = useReducer(themeReducer, initialThemeState);
-
-  const toggleTheme = useCallback(() => {
-    themeDispatch({ type: 'TOGGLE_THEME' });
-  }, []);
-
-  return (
-    <ThemeContext.Provider value={{ ...themeState, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
-
-// --- NEW: NOTIFICATION PROVIDER ---
-const NotificationProvider = ({ children }) => {
-  const initialNotificationState = { notifications: [] };
-  const [notificationState, notificationDispatch] = useReducer(notificationReducer, initialNotificationState);
-
-  const addNotification = useCallback((notification) => {
-    notificationDispatch({ type: 'ADD_NOTIFICATION', payload: { ...notification, id: Date.now() } });
-  }, []);
-
-  const removeNotification = useCallback((id) => {
-    notificationDispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
-  }, []);
-
-  return (
-    <NotificationContext.Provider value={{ ...notificationState, addNotification, removeNotification }}>
-      {children}
-    </NotificationContext.Provider>
-  );
-};
-
-// --- NEW: INTERNATIONALIZATION PROVIDER (EXAMPLE WITH ENGLISH AND FRENCH) ---
-const messages = {
-  en: enMessages,
-  fr: frMessages,
-};
-
-const I18nProvider = ({ children }) => {
-  const [locale, setLocale] = useState('en');
-
-  return (
-    <IntlProvider locale={locale} messages={messages[locale]}>
-      <div className="flex gap-2 mb-4">
-        <Button onClick={() => setLocale('en')}>English</Button>
-        <Button onClick={() => setLocale('fr')}>Français</Button>
-      </div>
-      {children}
-    </IntlProvider>
-  );
-};
-
-// --- NEW: LOGIN MODAL COMPONENT ---
-const LoginModal = memo(({ open, onClose, onLogin }) => (
-  <Dialog open={open} onClose={onClose}>
-    <DialogTitle>Login</DialogTitle>
-    <DialogContent>
-      <TextField label="Email" fullWidth margin="normal" />
-      <TextField label="Password" type="password" fullWidth margin="normal" />
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose}>Cancel</Button>
-      <Button onClick={onLogin}>Login</Button>
-    </DialogActions>
-  </Dialog>
-));
-
 // --- MAIN APP COMPONENT ---
 const App = () => {
     return (
-        <AuthProvider>
-          <ThemeProvider>
-            <NotificationProvider>
-              <I18nProvider>
-                <Elements stripe={stripePromise}>
-                  <BookingProvider>
-                      <BookingFlow />
-                  </BookingProvider>
-                </Elements>
-              </I18nProvider>
-            </NotificationProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <BookingProvider>
+            <BookingFlow />
+        </BookingProvider>
     );
 };
 
@@ -750,26 +363,6 @@ const BookingFlow = () => {
         savedBookings,
         setSavedBookings
     } = useBookingContext();
-
-    const { user, isAuthenticated, login, logout } = useAuthContext();
-    const { isDark, toggleTheme } = useThemeContext();
-    const { notifications, addNotification, removeNotification } = useNotificationContext();
-    const { location: geoLocation } = useGeolocation();
-    const availableVehicles = useRealTimeAvailability(vehicles);
-    const { trackEvent } = useAnalytics();
-    const { data: profileData } = useUserProfile(user?.id);
-
-    // --- NEW: STATE FOR LOGIN MODAL ---
-    const [loginOpen, setLoginOpen] = useState(false);
-
-    // --- NEW: STATE FOR PICKUP LOCATION ---
-    const [pickupLocation, setPickupLocation] = useState(null);
-
-    // --- NEW: STATE FOR SEARCH ---
-    const [searchTerm, setSearchTerm] = useState('');
-
-    // --- NEW: STATE FOR FAVORITES ---
-    const [favorites, setFavorites] = useState([]);
 
     // --- DATA FETCHING WITH CUSTOM HOOKS ---
     const vehicleTypesData = VEHICLE_TYPES_DATA;
@@ -808,26 +401,6 @@ const typesLoading = false;
         }, 800); // 800ms delay to simulate API call
     }
 }, [formState.vehicleType, setIsLoading, setVehicles, setAllVehicles]);
-
-    // --- NEW: EFFECT FOR NOTIFICATIONS ON BOOKING ---
-    useEffect(() => {
-      if (currentStep === allSteps.length - 1) {
-        addNotification({ message: 'Booking confirmed!' });
-      }
-    }, [currentStep, addNotification]);
-
-    // --- NEW: EFFECT FOR TRACKING PAGE VIEWS ---
-    useEffect(() => {
-      trackEvent('page_view', { step: currentStep });
-    }, [currentStep, trackEvent]);
-
-    // --- NEW: EFFECT FOR SETTING PICKUP LOCATION FROM GEOLOCATION ---
-    useEffect(() => {
-      if (geoLocation) {
-        setPickupLocation(geoLocation);
-      }
-    }, [geoLocation]);
-
     // --- VALIDATION LOGIC WITH USECALLBACK ---
     const validateStep = useCallback((step) => {
         const newErrors = {};
@@ -933,28 +506,6 @@ if (shouldSucceed) {
             }
         }
     }, [formState, validateStep, setIsLoading, setSavedBookings, handleNext, setBookingError]);
-
-    // --- NEW: HANDLE LOGIN ---
-    const handleLogin = useCallback(() => {
-      // Simulate login
-      login({ id: 1, name: 'User' });
-      setLoginOpen(false);
-      addNotification({ message: 'Logged in successfully!' });
-    }, [login, addNotification]);
-
-    // --- NEW: HANDLE ADD TO FAVORITES ---
-    const addToFavorites = useCallback((vehicle) => {
-      setFavorites(prev => [...prev, vehicle]);
-      addNotification({ message: `${vehicle.name} added to favorites!` });
-    }, [addNotification]);
-
-    // --- NEW: HANDLE SEARCH ---
-    const handleSearch = useCallback((e) => {
-      setSearchTerm(e.target.value);
-      // Filter vehicles based on search
-      const filtered = VEHICLES_DATA.filter(v => v.name.toLowerCase().includes(e.target.value.toLowerCase()));
-      setVehicles(filtered);
-    }, [setVehicles]);
 
     const getVehicleInfo = useCallback((id) => allVehicles.find(v => v.id === id), [allVehicles]);
 
@@ -1538,79 +1089,31 @@ if (shouldSucceed) {
                 ::-webkit-scrollbar-thumb:hover {
                     background: linear-gradient(135deg, #374151 0%, #111827 100%);
                 }
-
-                /* NEW: Dark Mode Styles */
-                body.dark {
-                    background-color: #111827;
-                    color: #f9fafb;
-                }
-
-                body.dark .bg-white {
-                    background-color: #1f2937;
-                }
-
-                /* Add more dark mode classes as needed */
             `}</style>
             
-            <div className={`min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 text-gray-900 py-10 px-4 font-sans antialiased ${isDark ? 'dark' : ''}`}>
+            <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-100 text-gray-900 py-10 px-4 font-sans antialiased">
                 <div className="relative max-w-6xl mx-auto z-10">
                     <header className="text-center mb-12 animate-in fade-in slide-in-from-bottom duration-1000">
                         <h1 className="text-5xl md:text-7xl font-black text-transparent bg-gradient-to-r from-black via-gray-800 to-black bg-clip-text mb-4 tracking-tighter">
-                            <FormattedMessage id="app.title" defaultMessage="Book Your Perfect Ride" />
+                            Book Your Perfect Ride
                         </h1>
-                        <p className="text-gray-600 text-xl font-medium"><FormattedMessage id="app.subtitle" defaultMessage="Fast, Simple, and Secure Vehicle Rentals" /></p>
+                        <p className="text-gray-600 text-xl font-medium">Fast, Simple, and Secure Vehicle Rentals</p>
                         <div className="mt-6 flex items-center justify-center gap-8 text-sm text-gray-500">
                             <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4 text-green-600" />
-                                <span><FormattedMessage id="app.secure" defaultMessage="100% Secure" /></span>
+                                <span>100% Secure</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-blue-600" />
-                                <span><FormattedMessage id="app.instant" defaultMessage="Instant Booking" /></span>
+                                <span>Instant Booking</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Star className="w-4 h-4 text-amber-500 fill-current" />
-                                <span><FormattedMessage id="app.rating" defaultMessage="4.9/5 Rating" /></span>
+                                <span>4.9/5 Rating</span>
                             </div>
                         </div>
                     </header>
-
-                    {/* NEW: AUTHENTICATION AND THEME CONTROLS */}
-                    <div className="flex justify-end gap-4 mb-4">
-                        {isAuthenticated ? (
-                            <Button onClick={logout} startIcon={<LogOut />}>
-                                Logout
-                            </Button>
-                        ) : (
-                            <Button onClick={() => setLoginOpen(true)} startIcon={<LogIn />}>
-                                Login
-                            </Button>
-                        )}
-                        <FormControlLabel
-                            control={<Switch checked={isDark} onChange={toggleTheme} />}
-                            label={isDark ? <Moon /> : <Sun />}
-                        />
-                        <Globe className="w-6 h-6" /> {/* Placeholder for language switch */}
-                    </div>
-
-                    <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} onLogin={handleLogin} />
-
-                    {/* NEW: NOTIFICATIONS */}
-                    <div className="fixed top-4 right-4 space-y-2">
-                        {notifications.map(notif => (
-                            <div key={notif.id} className="bg-white p-4 rounded shadow flex items-center gap-2">
-                                <Bell className="w-5 h-5" />
-                                <p>{notif.message}</p>
-                                <Button onClick={() => removeNotification(notif.id)}>Close</Button>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* NEW: SEARCH BAR */}
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <SearchBar onSearch={handleSearch} />
-                    </Suspense>
-
+                    
                     {/* Enhanced Progress Indicator */}
                     <div className="mb-12 px-4 hidden lg:block">
                         <div className="flex items-center justify-center">
@@ -1680,35 +1183,6 @@ if (shouldSucceed) {
                             <div className="mb-12 min-h-[400px] flex items-center justify-center">
                                 {allSteps[currentStep]?.component()}
                             </div>
-
-                            {/* NEW: ADDITIONAL FEATURES IN MAIN */}
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <MapComponent center={pickupLocation || { lat: 0, lng: 0 }} />
-                            </Suspense>
-
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <Profile user={profileData || user} />
-                            </Suspense>
-
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <BookingHistory bookings={savedBookings} />
-                            </Suspense>
-
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <Reviews vehicleId={formState.specificModel} />
-                            </Suspense>
-
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <Favorites favorites={favorites} />
-                            </Suspense>
-
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <PaymentForm />
-                            </Suspense>
-
-                            <Suspense fallback={<LoadingSpinner />}>
-                                <ChatSupport />
-                            </Suspense>
                             
                             {/* Enhanced Navigation */}
                             {currentStep < allSteps.length - 1 && (
