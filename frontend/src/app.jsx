@@ -9,8 +9,22 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { IntlProvider, FormattedMessage } from 'react-intl';
-import enMessages from './messages/en.json'; // Assume we have translation files
-import frMessages from './messages/fr.json';
+// Inline message objects instead of importing files
+const enMessages = {
+  "app.title": "Book Your Perfect Ride",
+  "app.subtitle": "Fast, Simple, and Secure Vehicle Rentals", 
+  "app.secure": "100% Secure",
+  "app.instant": "Instant Booking",
+  "app.rating": "4.9/5 Rating"
+};
+
+const frMessages = {
+  "app.title": "Réservez Votre Trajet Parfait",
+  "app.subtitle": "Location de Véhicules Rapide, Simple et Sécurisée",
+  "app.secure": "100% Sécurisé", 
+  "app.instant": "Réservation Instantanée",
+  "app.rating": "Note 4.9/5"
+};
 
 // --- NEW: STRIPE PROMISE FOR PAYMENT INTEGRATION ---
 const stripePromise = loadStripe('pk_test_your_stripe_public_key'); // Replace with actual key
